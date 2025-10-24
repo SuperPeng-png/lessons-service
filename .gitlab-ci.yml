@@ -1,0 +1,32 @@
+stages:
+  - test
+  - docker
+
+variables:
+  SPRING_PROFILES_ACTIVE: "dev"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .m2/repository
+
+maven-test:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - mvn -B verify
+
+build-docker-image:
+  stage: docker
+  image: docker:26
+  services:
+    - name: docker:26-dind
+      command: ["--tls=false"]
+  needs:
+    - maven-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - docker build -t registry.example.com/lessons-service:${CI_COMMIT_SHORT_SHA} .
+  artifacts:
+    paths: []

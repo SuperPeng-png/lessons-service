@@ -4,8 +4,23 @@ spring:
   profiles:
     default: dev
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 logging:
   level:
+    root: INFO
     org.hibernate.SQL: INFO
     org.hibernate.type.descriptor.sql.BasicBinder: INFO
 
@@ -15,28 +30,37 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/lessons_service}
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/lessons_service_dev}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
+  flyway:
+    enabled: false
+logging:
+  level:
+    com.yourname.tutor: DEBUG
 
 ---
 spring:
   config:
     activate:
-      on-profile: prod
+      on-profile: staging
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:postgresql://staging-db:5432/lessons_service}
+    username: ${DB_USERNAME:lessons_service_staging}
+    password: ${DB_PASSWORD:changeMe}
+    hikari:
+      maximum-pool-size: 10
   jpa:
     show-sql: false
     hibernate:
@@ -44,3 +68,32 @@ spring:
     properties:
       hibernate:
         format_sql: false
+  flyway:
+    enabled: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
