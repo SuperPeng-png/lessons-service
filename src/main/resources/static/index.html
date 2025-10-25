@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lessons Service</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            background: #f4f6fb;
+            color: #1f2933;
+        }
+
+        header {
+            max-width: 800px;
+            margin: 0 auto 2rem auto;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        p.subtitle {
+            margin-top: 0;
+            color: #52606d;
+        }
+
+        #tutor-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .tutor-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+        }
+
+        .tutor-card h2 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+        }
+
+        .tutor-card .details {
+            margin: 0;
+            color: #334155;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #64748b;
+            background: rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .error {
+            border: 1px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            color: #b91c1c;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lessons Service</h1>
+        <p class="subtitle">Browse the tutors currently available for booking.</p>
+    </header>
+    <main>
+        <section id="content">
+            <div class="empty-state" id="loading">Loading tutors…</div>
+        </section>
+    </main>
+    <script>
+        const content = document.getElementById("content");
+        const loading = document.getElementById("loading");
+
+        fetch("/api/tutors")
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Request failed with status ${response.status}`);
+                }
+                return response.json();
+            })
+            .then((tutors) => {
+                if (!Array.isArray(tutors) || tutors.length === 0) {
+                    loading.textContent = "No tutors found yet. Add one through the API to see it listed here.";
+                    return;
+                }
+
+                const list = document.createElement("ul");
+                list.id = "tutor-list";
+
+                tutors.forEach((tutor) => {
+                    const card = document.createElement("li");
+                    card.className = "tutor-card";
+
+                    const name = document.createElement("h2");
+                    name.textContent = tutor.fullName || "Unnamed Tutor";
+
+                    const details = document.createElement("p");
+                    details.className = "details";
+
+                    const expertise = tutor.expertise || "Generalist";
+                    const rate = tutor.hourlyRate != null ? `$${tutor.hourlyRate}/hr` : "Rate unavailable";
+
+                    details.textContent = `${expertise} • ${rate}`;
+
+                    card.appendChild(name);
+                    card.appendChild(details);
+                    list.appendChild(card);
+                });
+
+                content.replaceChildren(list);
+            })
+            .catch((error) => {
+                const message = document.createElement("div");
+                message.className = "error";
+                message.textContent = `We couldn't load tutors right now. ${error.message}`;
+                content.replaceChildren(message);
+            });
+    </script>
+</body>
+</html>
